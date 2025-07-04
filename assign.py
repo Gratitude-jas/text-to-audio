@@ -1,21 +1,32 @@
+from flask import Flask, request, render_template_string
 from gtts import gTTS
 import subprocess
 import platform
 
-# Enter the text you want to convert to speech
-text = input("Enter text to speak: ")
+app = Flask(__name__)
 
-# Convert the text to speech
-tts = gTTS(text=text, lang='en')
+@app.route('/', methods=['GET'])
+def index():
+    return render_template_string(open("index.html").read())
 
-# Save the audio file
-tts.save("speech.mp3")
+@app.route('/speak', methods=['POST'])
+def speak():
+    try:
+        text = request.form['text']
+        tts = gTTS(text=text, lang='en')
+        tts.save("speech.mp3")
 
-# Play the saved audio file using system player
-system_name = platform.system()
-if system_name == "Windows":
-    subprocess.run(["start", "speech.mp3"], shell=True)
-elif system_name == "Darwin":  # macOS
-    subprocess.run(["afplay", "speech.mp3"])
-else:  # Linux
-    subprocess.run(["mpg321", "speech.mp3"])
+        system_name = platform.system()
+        if system_name == "Windows":
+            subprocess.run(["start", "speech.mp3"], shell=True)
+        elif system_name == "Darwin":
+            subprocess.run(["afplay", "speech.mp3"])
+        else:
+            subprocess.run(["mpg321", "speech.mp3"])
+            
+        return "✅ Speech played successfully! <a href='/'>Back</a>"
+    except Exception as e:
+        return f"<p style='color:red;'>⚠️ Error: {e}</p><a href='/'>Back</a>"
+
+if __name__ == '__main__':
+    app.run(debug=True)
